@@ -46,7 +46,7 @@ trait BaseByteArrayReadJournalDao extends ReadJournalDao {
     Source.fromPublisher(db.stream(queries.allPersistenceIdsDistinct(max).result))
 
   override def eventsByTag(tag: String, offset: Long, maxOffset: Long, max: Long): Source[Try[(PersistentRepr, Set[String], Long)], NotUsed] =
-    Source.fromPublisher(db.stream(queries.eventsByTag(s"%$tag%", offset, maxOffset, max).result))
+    Source.fromPublisher(db.stream(queries.eventsByTag(tag, offset, maxOffset, max).result))
       .via(serializer.deserializeFlow)
 
   override def messages(persistenceId: String, fromSequenceNr: Long, toSequenceNr: Long, max: Long): Source[Try[PersistentRepr], NotUsed] =
@@ -95,7 +95,7 @@ trait OracleReadJournalDao extends ReadJournalDao {
   abstract override def eventsByTag(tag: String, offset: Long, maxOffset: Long, max: Long): Source[Try[(PersistentRepr, Set[String], Long)], NotUsed] = {
     if (isOracleDriver(profile)) {
       val theOffset = Math.max(0, offset)
-      val theTag = s"%$tag%"
+      val theTag = tag
 
       val selectStatement =
         if (readJournalConfig.includeDeleted)
@@ -103,7 +103,7 @@ trait OracleReadJournalDao extends ReadJournalDao {
             SELECT "#$ordering", "#$deleted", "#$persistenceId", "#$sequenceNumber", "#$message", "#$tags"
             FROM (
               SELECT * FROM #$theTableName
-              WHERE "#$tags" LIKE $theTag
+              WHERE "#$tags" = $theTag
               AND "#$ordering" > $theOffset
               AND "#$ordering" <= $maxOffset
               ORDER BY "#$ordering"
@@ -114,7 +114,7 @@ trait OracleReadJournalDao extends ReadJournalDao {
             SELECT "#$ordering", "#$deleted", "#$persistenceId", "#$sequenceNumber", "#$message", "#$tags"
             FROM (
               SELECT * FROM #$theTableName
-              WHERE "#$tags" LIKE $theTag
+              WHERE "#$tags" = $theTag
               AND "#$ordering" > $theOffset
               AND "#$ordering" <= $maxOffset
               AND "#$deleted" = 'false'

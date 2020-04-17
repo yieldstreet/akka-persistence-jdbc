@@ -230,7 +230,7 @@ abstract class EventsByTagTest(config: String) extends QueryTestSpec(config, con
     }
   }
 
-  it should "persist and find tagged events when stored with multiple tags" in withActorSystem { implicit system =>
+  ignore should "persist and find tagged events when stored with multiple tags" in withActorSystem { implicit system =>
     val journalOps = new ScalaJdbcReadJournalOperations(system)
     withTestActors(replyToMessages = true) { (actor1, actor2, actor3) =>
       (actor1 ? withTags(1, "one", "1", "prime")).futureValue
